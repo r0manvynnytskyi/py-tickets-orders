@@ -63,7 +63,8 @@ class MovieSession(models.Model):
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.created_at)
@@ -74,14 +75,21 @@ class Order(models.Model):
 
 class Ticket(models.Model):
     movie_session = models.ForeignKey(
-        MovieSession, on_delete=models.CASCADE, related_name="tickets"
+        MovieSession,
+        on_delete=models.CASCADE,
+        related_name="tickets"
     )
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="tickets")
+    order = models.ForeignKey(Order,
+                              on_delete=models.CASCADE,
+                              related_name="tickets")
     row = models.IntegerField()
     seat = models.IntegerField()
 
     @staticmethod
-    def validate_position(value: int, max_value: int, field_name: str, error_to_raise):
+    def validate_position(value: int,
+                          max_value: int,
+                          field_name: str,
+                          error_to_raise):
         if not (1 <= value <= max_value):
             raise error_to_raise(
                 {field_name: f"{field_name} must be in the range " f"[1, {max_value}]"}
@@ -89,16 +97,23 @@ class Ticket(models.Model):
 
     def clean(self):
         cinema_hall = self.movie_session.cinema_hall
-        Ticket.validate_position(self.row, cinema_hall.rows, "row", ValidationError)
+        Ticket.validate_position(self.row,
+                                 cinema_hall.rows,
+                                 "row",
+                                 ValidationError)
         Ticket.validate_position(
-            self.seat, cinema_hall.seats_in_row, "seat", ValidationError
+            self.seat,
+            cinema_hall.seats_in_row,
+            "seat",
+            ValidationError
         )
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
 
-        return f"{self.movie_session} " f"(row: {self.row}," f" seat: {self.seat})"
+        return f"{self.movie_session} " \
+               f"(row: {self.row}," f" seat: {self.seat})"
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")

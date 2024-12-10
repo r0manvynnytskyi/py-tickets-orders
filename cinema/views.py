@@ -2,7 +2,13 @@ from django.db.models import F, Count
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Ticket, Order
+from cinema.models import (Genre,
+                           Actor,
+                           CinemaHall,
+                           Movie,
+                           MovieSession,
+                           Ticket,
+                           Order)
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -94,14 +100,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie__id=movie)
 
         if self.action == "list":
-            queryset = queryset.select_related("movie", "cinema_hall").annotate(
+            queryset = (queryset.select_related
+            ("movie", "cinema_hall").annotate(
                 tickets_available=F("cinema_hall__rows")
                 * F("cinema_hall__seats_in_row")
                 - Count("tickets")
-            )
+            ))
 
         elif self.action == "retrieve":
-            queryset = queryset.prefetch_related("movie", "cinema_hall")
+            queryset = (queryset.prefetch_related
+                        ("movie", "cinema_hall"))
 
         return queryset.distinct()
 
@@ -124,14 +132,17 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Order.objects.prefetch_related(
-            "tickets__movie_session__movie", "tickets__movie_session__cinema_hall"
+            "tickets__movie_session__movie",
+            "tickets__movie_session__cinema_hall"
         )
         queryset = queryset.filter(user=self.request.user)
 
         if self.action == "list":
-            queryset = queryset.prefetch_related("tickets__movie_session__cinema_hall")
+            queryset = (queryset.prefetch_related
+                        ("tickets__movie_session__cinema_hall"))
         elif self.action == "retrieve":
-            queryset = queryset.prefetch_related("tickets__movie_session")
+            queryset = (queryset.prefetch_related
+                        ("tickets__movie_session"))
 
         return queryset.distinct()
 
